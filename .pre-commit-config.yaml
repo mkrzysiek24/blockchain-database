@@ -1,0 +1,61 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-docstring-first
+    - id: check-toml
+    - id: check-yaml
+    - id: debug-statements
+    - id: end-of-file-fixer
+    - id: name-tests-test
+      args: [--pytest-test-first]
+
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+      - id: add-trailing-comma
+        args: [--py36-plus]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.0
+    hooks:
+      - id: pyupgrade
+        args: [--py36-plus]
+
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        pass_filenames: false
+        entry: isort .
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        pass_filenames: false
+        entry: pytest .
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        pass_filenames: false
+        entry: black .
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        pass_filenames: false
+        entry: mypy .
+        language: python
+        types: [python]

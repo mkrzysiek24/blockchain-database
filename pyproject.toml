@@ -1,0 +1,43 @@
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = [
+  "."
+]
+
+[tool.mypy]
+exclude = [".venv", ".mypy_cache", ".pytest_cache", ".flakeheaven_cache", "build"]
+check_untyped_defs = true
+ignore_missing_imports = true
+ignore_errors = false
+
+[tool.ruff]
+line-length = 120
+
+[tool.black]
+target-version = ['py312']
+line-length = 120
+exclude = '''
+/(
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.flakeheaven_cache
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+py_version = 312
+skip = [".gitignore", ".*"]
+extend_skip = [".md", ".json"]
+skip_glob = [
+  "build/*",
+  ".venv/*",
+  ".mypy_cache/*",
+  ".pytest_cache/*",
+  ".flakeheaven_cache/*"
+]
+line_length = 120

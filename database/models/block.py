@@ -7,7 +7,7 @@ from database.models.transaction import Transaction
 
 class Block(BaseModel):
     id: int
-    data: Optional[list[Transaction]] = []
+    data: List[Transaction] = []
     hash: str
     prev_hash: str
     prev_id: int

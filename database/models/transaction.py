@@ -1,11 +1,12 @@
 import base64
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from uuid import uuid4
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from pydantic import BaseModel, Field, Json
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from pydantic import BaseModel, Field, Json, field_validator
 
 
 class Transaction(BaseModel):
@@ -18,6 +19,12 @@ class Transaction(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @field_validator("data")
+    def validate_data_not_empty_json(cls, value):
+        if not value or (isinstance(value, dict) and not value):
+            raise ValueError("Data cannot be empty")
+        return value
 
     def is_valid(self, public_key_pem: str) -> bool:
         try:
@@ -37,6 +44,9 @@ class Transaction(BaseModel):
 
             public_key = serialization.load_pem_public_key(public_key_pem.encode())
 
+            # Cast public key to RSAPublicKey
+            public_key = cast(RSAPublicKey, public_key)
+
             # Verify the signature using the doctor's public key
             public_key.verify(
                 signature_bytes,
@@ -49,6 +59,4 @@ class Transaction(BaseModel):
             )
             return True
         except Exception as e:
-            print("========== ERROR ==========")
-            print(e)
             return False

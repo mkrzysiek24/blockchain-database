@@ -1,6 +1,34 @@
 import json
 
+import pytest
+from pydantic import ValidationError
+
 from database import Doctor, Patient
+
+
+def test_key_generation():
+    doctor = Doctor(id=1, name="Dr. Wilson", email="wilson@hospital.com")
+    patient = Patient(id=2, name="Carol White", email="carol@email.com")
+
+    # Key generation
+    assert doctor.public_key is not None
+    assert doctor.private_key is not None
+    assert patient.public_key is not None
+    assert patient.private_key is not None
+
+
+def test_transaction_creation():
+    doctor = Doctor(id=1, name="Dr. Wilson", email="wilson@hospital.com")
+    patient = Patient(id=2, name="Carol White", email="carol@email.com")
+
+    # Transaction creation
+    data = json.dumps({"experiment_1": "34.5", "experiment_2": "67.8", "experiment_3": "123.0"})
+    transaction = doctor.create_transaction(patient_id=patient.id, data=data)
+
+    assert transaction.doctor_id == doctor.id
+    assert transaction.patient_id == patient.id
+    assert transaction.signature is not None
+    assert isinstance(transaction.signature, str)
 
 
 def test_transaction_data_integrity():
@@ -16,10 +44,9 @@ def test_transaction_data_integrity():
 
     # Verify transaction can't be tampered with
     modified_data = json.dumps({"blood_pressure": "140/90", "temperature": "38.5", "heart_rate": "90"})
-
     transaction.data = modified_data
 
-    assert not transaction.is_valid(doctor.public_key)
+    assert doctor.public_key is not None and not transaction.is_valid(doctor.public_key)
 
 
 def test_multiple_transactions():
@@ -46,25 +73,9 @@ def test_transaction_with_empty_data():
 
     empty_data = json.dumps({})
 
-    transaction = doctor.create_transaction(patient_id=patient.id, data=empty_data)
-
-    assert json.dumps(transaction.data, sort_keys=True) == empty_data
-    assert transaction.is_valid(doctor.public_key)
-
-    # Key generation
-    assert doctor.public_key is not None
-    assert doctor._private_key is not None
-    assert patient.public_key is not None
-    assert patient._private_key is not None
-
-    # Transaction creation
-    data = json.dumps({"experiment_1": "34.5", "experiment_2": "67.8", "experiment_3": "123.0"})
-    transaction = doctor.create_transaction(patient_id=patient.id, data=data)
-
-    assert transaction.doctor_id == doctor.id
-    assert transaction.patient_id == patient.id
-    assert transaction.signature is not None
-    assert isinstance(transaction.signature, str)
+    # Try creating a transaction and expect a ValidationError due to empty data
+    with pytest.raises(ValidationError):
+        transaction = doctor.create_transaction(patient_id=patient.id, data=empty_data)
 
 
 def test_invalid_transaction():
@@ -75,8 +86,5 @@ def test_invalid_transaction():
     data = json.dumps({"experiment_1": "34.5", "experiment_2": "67.8", "experiment_3": "123.0"})
     transaction = doctor.create_transaction(patient_id=patient.id, data=data)
 
-    # Weryfikacja transakcji z nieprawidłowym kluczem publicznym
-    is_valid = transaction.is_valid(doctor2.public_key)
-
-    # Sprawdzenie, że transakcja jest nieprawidłowa
-    assert is_valid == False
+    # Verify transaction with an invalid public key
+    assert not transaction.is_valid(doctor2.public_key)

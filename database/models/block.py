@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, Json
 
-from database.models.transaction import Transaction
+from .transaction import Transaction
 
 
 class Block(BaseModel):
@@ -12,10 +12,10 @@ class Block(BaseModel):
     prev_hash: str
     prev_id: int
 
-    # póki co identyfikator transakcji to id_bloku i numer transakcji w bloku (indeks w liscie)
-    def add_transaction(self, new_transaction: Transaction):
+    def add_transaction(self, new_transaction: Transaction, public_key: str):
         # Walidacja transakcji - sprawdzenie podpisu
-        if not new_transaction.is_valid():
+
+        if not new_transaction.is_valid(public_key):
             raise Exception("Error")
 
         # Dodanie transakcji

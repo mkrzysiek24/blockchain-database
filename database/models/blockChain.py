@@ -1,14 +1,16 @@
-import hashlib
 from typing import List
 
 from pydantic import BaseModel
 
-from database.models import Block, Transaction
+from .block import Block
+from .doctor import Doctor
+from .transaction import Transaction
 
 
 class BlockChain(BaseModel):
     chain: List[Block] = []
     emitted_transactions: List[Transaction] = []
+    doctors: List[Doctor] = []
 
     # zakładamy, że nasz chain zaczyna się zawsze od pustego bloku
     def __init__(self):
@@ -28,19 +30,29 @@ class BlockChain(BaseModel):
         new_hash = self.calculate_hash(new_id, new_data, last_block.hash)
 
         # tworzymy obiekt bloku
-        new_block = Block(id=new_id, hash=new_hash, prev_hash=last_block.hash, prev_id=last_block.id)
+        new_block = Block(
+            id=new_id,
+            hash=new_hash,
+            prev_hash=last_block.hash,
+            prev_id=last_block.id,
+        )
 
         for transaction in new_data:
-            new_block.add_transaction(transaction)
+            # TODO: Error handling
+            public_key = next(
+                (doctor.public_key for doctor in self.doctors if doctor.id == transaction.doctor_id),
+                None,
+            )
+            new_block.add_transaction(transaction, public_key)
 
-        # dodajemy go do BlockChainu
-        if len(new_block.data) > 1:
+        # dodajemy go do blockchainu
+        if len(new_block.data) >= 1:
             self.chain.append(new_block)
 
     def emit_transaction(self, transaction: Transaction):
         self.emitted_transactions.append(transaction)
 
-        if len(self.emitted_transactions) >= 2:
+        if len(self.emitted_transactions) >= 1:
             self._add_block()
 
     def is_valid(self) -> bool:

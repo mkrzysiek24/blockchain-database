@@ -1,14 +1,15 @@
 import base64
-from typing import Any
 from datetime import datetime
-from pydantic import BaseModel, Field, Json
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
+
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
+from pydantic import BaseModel, Field, Json
+
 
 class Transaction(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid4()))    
+    id: str = Field(default_factory=lambda: str(uuid4()))
     doctor_id: int
     patient_id: int
     data: Json[Any]
@@ -18,22 +19,23 @@ class Transaction(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def is_valid(self, public_key: str) -> bool:
+    def is_valid(self, public_key_pem: str) -> bool:
         try:
             if not self.signature:
                 raise ValueError("No signature provided")
-            
+
+            if not public_key_pem:
+                raise ValueError("Public key is required and cannot be None")
+
             # Decode the base64-encoded signature
             signature_bytes = base64.b64decode(self.signature)
-            
+
             # Serialize the transaction data for verification
             transaction_data = (
-                f"{self.id}|"
-                f"{self.doctor_id}|"
-                f"{self.patient_id}|"
-                f"{self.date.isoformat()}|"
-                f"{self.data}"
+                f"{self.id}|" f"{self.doctor_id}|" f"{self.patient_id}|" f"{self.date.isoformat()}|" f"{self.data}"
             ).encode()
+
+            public_key = serialization.load_pem_public_key(public_key_pem.encode())
 
             # Verify the signature using the doctor's public key
             public_key.verify(
@@ -41,10 +43,12 @@ class Transaction(BaseModel):
                 transaction_data,
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
+                    salt_length=padding.PSS.MAX_LENGTH,
                 ),
-                hashes.SHA256()
+                hashes.SHA256(),
             )
             return True
         except Exception as e:
+            print("========== ERROR ==========")
+            print(e)
             return False

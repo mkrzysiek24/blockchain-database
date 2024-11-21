@@ -42,6 +42,7 @@ class Transaction(BaseModel):
                 f"{self.id}|" f"{self.doctor_id}|" f"{self.patient_id}|" f"{self.date.isoformat()}|" f"{self.data}"
             ).encode()
 
+            # Load the public key from PEM format
             public_key = serialization.load_pem_public_key(public_key_pem.encode())
 
             # Cast public key to RSAPublicKey

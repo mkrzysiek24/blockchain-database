@@ -75,7 +75,7 @@ def test_transaction_with_empty_data():
 
     # Try creating a transaction and expect a ValidationError due to empty data
     with pytest.raises(ValidationError):
-        transaction = doctor.create_transaction(patient_id=patient.id, data=empty_data)
+        doctor.create_transaction(patient_id=patient.id, data=empty_data)
 
 
 def test_invalid_transaction():

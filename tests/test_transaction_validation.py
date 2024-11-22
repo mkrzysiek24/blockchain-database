@@ -3,7 +3,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from database import Doctor, Patient
+from database.models import Doctor, Patient
 
 
 def test_key_generation():

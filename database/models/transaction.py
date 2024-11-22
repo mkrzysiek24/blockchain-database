@@ -1,13 +1,12 @@
 import base64
 from datetime import datetime
 from typing import Any, Optional, cast
-from typing_extensions import Self
 from uuid import uuid4
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
-from pydantic import BaseModel, Field, Json, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, Json, field_validator
 
 
 class Transaction(BaseModel):

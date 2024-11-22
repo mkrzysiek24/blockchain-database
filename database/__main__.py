@@ -1,13 +1,10 @@
 import json
-from logging import basicConfig, getLogger
+from logging import getLogger
 from os.path import basename
 
-from models.blockChain import BlockChain
-from models.doctor import Doctor
-from models.patient import Patient
+from database.models import BlockChain, Doctor, Patient
 
 logger = getLogger(basename(__file__))
-basicConfig(level="INFO")
 logger.info(
     "Starting application",
 )

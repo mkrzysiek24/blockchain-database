@@ -78,6 +78,15 @@ def test_transaction_with_empty_data():
         transaction = doctor.create_transaction(patient_id=patient.id, data=empty_data)
 
 
+def test_transaction_with_wrong_patient_id():
+    doctor = Doctor(id=1, name="Dr. Wilson", email="wilson@hospital.com")
+    empty_data = json.dumps({"experiment_1": "34.5", "experiment_2": "67.8", "experiment_3": "123.0"})
+
+    # Try creating a transaction and expect a ValidationError due to empty data
+    with pytest.raises(ValidationError):
+        transaction = doctor.create_transaction(patient_id=-1, data=empty_data)
+
+
 def test_invalid_transaction():
     doctor = Doctor(id=1, name="doctor1", email="doctor1@")
     doctor2 = Doctor(id=3, name="doctor2", email="doctor2@")

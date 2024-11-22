@@ -1,14 +1,20 @@
-from collections import defaultdict
+from typing import Dict, Set
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from database.models import Block, BlockChain, Transaction
+from .blockChain import BlockChain
+from .transaction import Transaction
 
 
 class Network(BaseModel):
-    def __init__(self, num_facilities):
+    num_facilities: int = Field(default=1)
+    facilities: Dict[str, BlockChain] = Field(default_factory=dict)
+    doctors: Set[str] = Field(default_factory=set)
+
+    def __init__(self, num_facilities=1):
+        super().__init__()
         self.num_facilities = num_facilities
-        facilities: dict[str, BlockChain] = {}
+        self.facilities: dict[str, BlockChain] = {}
         self.doctors = set()
 
     def create_facility_chain(self, facility_id: str):

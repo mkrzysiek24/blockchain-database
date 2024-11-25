@@ -6,7 +6,7 @@ from uuid import uuid4
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
-from pydantic import BaseModel, Field, Json, field_validator
+from pydantic import BaseModel, ConfigDict, Field, Json, field_validator
 
 
 class Transaction(BaseModel):
@@ -16,14 +16,32 @@ class Transaction(BaseModel):
     data: Json[Any]
     date: datetime
     signature: Optional[str] = None
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("data")
-    def validate_data_not_empty_json(cls, value):
-        if not value or (isinstance(value, dict) and not value):
+    def validate_data(cls, value: dict | None):
+        if not value:
             raise ValueError("Data cannot be empty")
+        return value
+
+    @field_validator("date")
+    def validate_date(cls, value: datetime | None):
+        if not value:
+            raise ValueError("Date is empty")
+        if value > datetime.now():
+            raise ValueError("Date can't be in future")
+        return value
+
+    @field_validator("doctor_id")
+    def validate_doctor_id(cls, value: int | None):
+        if not value or value < 0:
+            raise ValueError("Doctor id not provided")
+        return value
+
+    @field_validator("patient_id")
+    def validate_patient_id(cls, value: int | None):
+        if not value or value < 0:
+            raise ValueError("Patient id not provided")
         return value
 
     def is_valid(self, public_key_pem: str) -> bool:

@@ -22,7 +22,7 @@ def previous_hash():
 
 @pytest.fixture
 def example_block(example_transaction):
-    return Block(timestamp=datetime.now(), transactions=[example_transaction], previous_hash=previous_hash())
+    return Block.create_block(transactions=[example_transaction], previous_hash=previous_hash(), difficulty=2)
 
 
 def test_create_block(example_block):
@@ -32,7 +32,7 @@ def test_create_block(example_block):
     assert block.timestamp is not None
     assert len(block.transactions) == 1
     assert block.previous_hash == previous_hash()
-    assert block.hash is None
+    assert block.hash is not None
 
 
 def test_calculate_hash(example_block):

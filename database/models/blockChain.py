@@ -1,3 +1,6 @@
+import json
+import sys
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -7,6 +10,9 @@ from .doctor import Doctor
 from .transaction import Transaction
 
 
+# zaimplementować to, żeby blockchain sprawdzał poprawność każdego z bloku
+# walidacja blockchainu jeszcze jakaś oprócz sprawdzania haszy?
+# zależność od czasu, a nie liczby emitowanych transakcji
 class BlockChain(BaseModel):
     chain: List[Block] = Field(default_factory=list)
     emitted_transactions: List[Transaction] = Field(default_factory=list)
@@ -14,9 +20,19 @@ class BlockChain(BaseModel):
 
     def __init__(self):
         super().__init__()
-        root_block = Block(id=0, hash="-1", prev_hash="-1", prev_id=-1)
+        self.chain = []
 
-        self.chain = [root_block]
+    # blockchain validation
+    # checking if block at chain[i] has prev "pointer" at chain[i-1] (hashes are right)
+    # also, validating all blocks
+    def is_valid(self, difficulty: int) -> bool:
+        if len(self.chain) == 0:
+            return True
+        for i in range(0, len(self.chain)-1):
+            if self.chain[i+1].previous_hash != self.chain[i].hash or not self.chain[i].is_valid(difficulty):
+                return False
+        if self.chain[-1].is_valid(difficulty):
+            return True
 
     def _add_block(self):
         new_data = self.emitted_transactions[:2]
@@ -24,15 +40,8 @@ class BlockChain(BaseModel):
 
         # Create new block
         last_block = self.chain[-1]
-        new_id = last_block.id + 1
-        new_hash = self.calculate_hash(new_id, new_data, last_block.hash)
-
-        new_block = Block(
-            id=new_id,
-            hash=new_hash,
-            prev_hash=last_block.hash,
-            prev_id=last_block.id,
-        )
+        # new_id = last_block.id + 1
+        new_block = Block.create_block(new_data, last_block.hash)
 
         for transaction in new_data:
             # TODO: Error handling
@@ -53,12 +62,4 @@ class BlockChain(BaseModel):
         if len(self.emitted_transactions) >= 1:
             self._add_block()
 
-    @staticmethod
-    def is_valid() -> bool:
-        return True
 
-    @staticmethod
-    def calculate_hash(block_id, data: List[Transaction], prev_hash: str) -> str:
-        # Placeholder hash
-        hash_string = str(block_id) + str(00000000000) + prev_hash
-        return hash_string

@@ -20,6 +20,17 @@ class Block(BaseModel):
     hash: Optional[str] = None
     nonce: int = Field(default=0)
 
+
+    @classmethod
+    def create_block(cls, transactions: list, previous_hash: str, difficulty: int = 4):
+        block = cls(
+            transactions=transactions,
+            previous_hash=previous_hash,
+        )
+        block.timestamp = datetime.now()
+        block.proof_of_work(difficulty)
+        return block
+
     @field_validator("transactions")
     def validate_transactions(cls, transactions: list[Transaction]):
         if not transactions:

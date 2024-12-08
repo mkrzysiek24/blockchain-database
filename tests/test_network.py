@@ -13,7 +13,7 @@ def test_create_facility_chain():
     network = Network(num_facilities=1)
     facility_id = "facility_1"
 
-  
+
     network.create_facility_chain(facility_id)
 
     assert facility_id in network.facilities
@@ -63,7 +63,7 @@ def test_validate_all_chains(network):
     facility_id_2 = "facility_2"
     network.create_facility_chain(facility_id_1)
     network.create_facility_chain(facility_id_2)
-    assert network.validate_all_chains()
+    assert network.validate_all_chains(2)
 
 
 def test_validate_all_chains_invalid(network, mocker):
@@ -71,4 +71,4 @@ def test_validate_all_chains_invalid(network, mocker):
     mock_invalid_blockchain = mocker.patch("database.models.blockChain.BlockChain")
     mock_invalid_blockchain.is_valid.return_value = False
     network.facilities[facility_id] = mock_invalid_blockchain
-    assert not network.validate_all_chains()
+    assert not network.validate_all_chains(2)

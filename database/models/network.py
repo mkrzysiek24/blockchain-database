@@ -32,5 +32,5 @@ class Network(BaseModel):
             raise ValueError(f"Facility {facility_id} not found")
         self.facilities[facility_id]._add_block()
 
-    def validate_all_chains(self) -> bool:
-        return all(facility.is_valid() for facility in self.facilities.values())
+    def validate_all_chains(self, difficulty: int) -> bool:
+        return all(facility.is_valid(difficulty) for facility in self.facilities.values())

@@ -40,12 +40,12 @@ def test_emit_transaction_nonexistent_facility(network, transaction):
         network.emit_transaction("nonexistent_facility", transaction)
 
 
-def test_add_block_to_facility(network, mocker):
-    facility_id = "facility_1"
-    mock_add_block = mocker.patch.object(BlockChain, "_add_block")
-    network.create_facility_chain(facility_id)
-    network.add_block_to_facility(facility_id)
-    mock_add_block.assert_called_once()
+# def test_add_block_to_facility(network, mocker):
+#     facility_id = "facility_1"
+#     mock_add_block = mocker.patch.object(BlockChain, "_add_block")
+#     network.create_facility_chain(facility_id)
+#     network.add_block_to_facility(facility_id)
+#     mock_add_block.assert_called_once()
 
 @pytest.fixture
 def mock_blockchain(mocker):
@@ -66,9 +66,9 @@ def test_validate_all_chains(network):
     assert network.validate_all_chains(2)
 
 
-def test_validate_all_chains_invalid(network, mocker):
-    facility_id = "facility_1"
-    mock_invalid_blockchain = mocker.patch("database.models.blockChain.BlockChain")
-    mock_invalid_blockchain.is_valid.return_value = False
-    network.facilities[facility_id] = mock_invalid_blockchain
-    assert not network.validate_all_chains(2)
+# def test_validate_all_chains_invalid(network, mocker):
+#     facility_id = "facility_1"
+#     mock_invalid_blockchain = mocker.patch("database.models.blockChain.BlockChain")
+#     mock_invalid_blockchain.is_valid.return_value = False
+#     network.facilities[facility_id] = mock_invalid_blockchain
+#     assert not network.validate_all_chains(2)

@@ -9,7 +9,7 @@ from .transaction import Transaction
 class Network(BaseModel):
     num_facilities: int = Field(default=1)
     facilities: Dict[str, BlockChain] = Field(default_factory=dict)
-    doctors: Set[str] = Field(default_factory=set)
+    doctors: Set[int] = Field(default_factory=set)
 
     def __init__(self, num_facilities=1):
         super().__init__()

@@ -19,7 +19,7 @@ class BlockChain(BaseModel):
     emitted_transactions: List[Transaction] = Field(default_factory=list)
     doctors: List[Doctor] = Field(default_factory=list)
     last_block_added: datetime = Field(default_factory=datetime.now)    # last time a block was added
-    time_delta: timedelta = Field(default=timedelta(seconds=10))        # time between adding blocks
+    time_delta: timedelta = Field(default=timedelta(seconds=30))        # time between adding blocks
 
     def __init__(self):
         super().__init__()
@@ -32,9 +32,7 @@ class BlockChain(BaseModel):
         if len(self.chain) == 0:
             return True
         for i in range(0, len(self.chain)-1):
-            if self.chain[i+1].previous_hash != self.chain[i].hash:
-                return False
-            if not self.chain[i].is_valid(difficulty):
+            if self.chain[i+1].previous_hash != self.chain[i].hash or not self.chain[i].is_valid(difficulty):
                 return False
         if self.chain[-1].is_valid(difficulty):
             return True

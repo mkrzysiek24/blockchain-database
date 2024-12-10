@@ -105,7 +105,7 @@ def test_emit_transaction_with_time_delta(example_transaction, example_block):
     blockchain.chain.append(block2)
     blockchain.chain.append(block3)
 
-    blockchain.last_block_added = datetime.now() - timedelta(seconds=20)
+    blockchain.last_block_added = datetime.now() - timedelta(minutes=45)
     blockchain.emit_transaction(example_transaction)
 
     assert example_transaction not in blockchain.emitted_transactions
@@ -115,7 +115,7 @@ def test_emit_transaction_with_time_delta(example_transaction, example_block):
 
 def test_emit_transaction_with_time_delta_empty(example_transaction):
     blockchain = BlockChain()
-    blockchain.last_block_added = datetime.now() - timedelta(seconds=20)
+    blockchain.last_block_added = datetime.now() - timedelta(minutes=45)
     blockchain.emit_transaction(example_transaction)
 
     assert example_transaction not in blockchain.emitted_transactions

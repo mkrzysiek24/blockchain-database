@@ -20,6 +20,16 @@ class Block(BaseModel):
     hash: Optional[str] = None
     nonce: int = Field(default=0)
 
+    def serialize(self) -> str:
+        block_data = (
+            f"{self.id}|"
+            f"{self.timestamp}|"
+            f"{[transaction.model_dump() for transaction in self.transactions]}|"
+            f"{self.previous_hash}|"
+            f"{self.nonce}"
+        )
+        return block_data
+
     @classmethod
     def create_block(cls, transactions: list, previous_hash: str, difficulty: int = 4):
         block = cls(
@@ -51,13 +61,7 @@ class Block(BaseModel):
         logger.info(f"Proof of work completed. Final hash: {self.hash}")
 
     def _calculate_hash(self) -> str:
-        block_data = (
-            f"{self.id}|"
-            f"{self.timestamp}|"
-            f"{[transaction.model_dump() for transaction in self.transactions]}|"
-            f"{self.previous_hash}|"
-            f"{self.nonce}"
-        ).encode()
+        block_data = self.serialize().encode()
 
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
         digest.update(block_data)

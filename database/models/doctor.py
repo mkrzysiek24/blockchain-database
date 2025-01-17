@@ -23,13 +23,7 @@ class Doctor(User):
         )
 
         # Serialize the transaction data
-        transaction_data = (
-            f"{transaction.id}|"
-            f"{transaction.doctor_id}|"
-            f"{transaction.patient_id}|"
-            f"{transaction.date.isoformat()}|"
-            f"{transaction.data}"
-        ).encode()
+        transaction_data = transaction.serialize().encode()
 
         # Deserialize private key (PEM format)
         private_key_pem = self.private_key.encode()

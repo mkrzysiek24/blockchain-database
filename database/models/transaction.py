@@ -44,6 +44,12 @@ class Transaction(BaseModel):
             raise ValueError("Patient id not provided")
         return value
 
+    def serialize(self) -> str:
+        transaction_data = (
+            f"{self.id}|" f"{self.doctor_id}|" f"{self.patient_id}|" f"{self.date.isoformat()}|" f"{self.data}"
+        )
+        return transaction_data
+
     def is_valid(self, public_key_pem: str) -> bool:
         try:
             if not self.signature:

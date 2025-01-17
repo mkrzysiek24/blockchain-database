@@ -1,11 +1,10 @@
+import json
 from datetime import datetime, timedelta
 from random import randint
-from unittest.mock import MagicMock
 
 import pytest
-import json
 
-from database.models import Transaction, Block, BlockChain
+from database.models import Block, BlockChain, Transaction
 
 
 @pytest.fixture

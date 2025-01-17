@@ -1,7 +1,7 @@
 import json
 from logging import getLogger
 
-from database.models import *
+from database.models import Doctor, Network
 
 logger = getLogger(__name__)
 
@@ -24,7 +24,7 @@ class Application:
         self.doctor = Doctor(
             id=doctor_id,
             name=doctor_name,
-            email=doctor_email
+            email=doctor_email,
         )
         logger.info("logged as default doctor")
 
@@ -33,7 +33,7 @@ class Application:
         self.doctor = Doctor(
             id=1234,
             name="doctor_name",
-            email="doctor@gmail.com"
+            email="doctor@gmail.com",
         )
         logger.info("logged as default doctor")
 
@@ -55,13 +55,13 @@ class Application:
             # create transaction
             transaction = self.doctor.create_transaction(
                 patient_id=patient_id,
-                data=json.dumps(data)
+                data=json.dumps(data),
             )
 
             # emit transaction to blockchain
             self.network.emit_transaction(
                 self.facility_id,
-                transaction
+                transaction,
             )
             logger.info("Transaction emitted successfully")
         else:

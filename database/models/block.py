@@ -20,7 +20,6 @@ class Block(BaseModel):
     hash: Optional[str] = None
     nonce: int = Field(default=0)
 
-
     @classmethod
     def create_block(cls, transactions: list, previous_hash: str, difficulty: int = 4):
         block = cls(
@@ -42,14 +41,14 @@ class Block(BaseModel):
         target = "0" * difficulty
         self.nonce = 0
         self.hash = self._calculate_hash()
-        # logger.debug(f"Initial hash: {self.hash}")
+        logger.debug(f"Initial hash: {self.hash}")
 
         while not self.hash.startswith(target):
             self.nonce += 1
             self.hash = self._calculate_hash()
-            # logger.debug(f"Nonce: {self.nonce}, Hash: {self.hash}")
+            logger.debug(f"Nonce: {self.nonce}, Hash: {self.hash}")
 
-        # logger.info(f"Proof of work completed. Final hash: {self.hash}")
+        logger.info(f"Proof of work completed. Final hash: {self.hash}")
 
     def _calculate_hash(self) -> str:
         block_data = (

@@ -1,5 +1,3 @@
-import json
-import sys
 from datetime import datetime, timedelta
 from logging import getLogger
 from typing import List
@@ -10,7 +8,6 @@ from .block import Block
 from .doctor import Doctor
 from .transaction import Transaction
 
-
 logger = getLogger(__name__)
 
 
@@ -18,8 +15,8 @@ class BlockChain(BaseModel):
     chain: List[Block] = Field(default_factory=list)
     emitted_transactions: List[Transaction] = Field(default_factory=list)
     doctors: List[Doctor] = Field(default_factory=list)
-    last_block_added: datetime = Field(default_factory=datetime.now)    # last time a block was added
-    time_delta: timedelta = Field(default=timedelta(seconds=30))        # time between adding blocks
+    last_block_added: datetime = Field(default_factory=datetime.now)  # last time a block was added
+    time_delta: timedelta = Field(default=timedelta(seconds=30))  # time between adding blocks
 
     def __init__(self):
         super().__init__()
@@ -31,11 +28,12 @@ class BlockChain(BaseModel):
     def is_valid(self, difficulty: int) -> bool:
         if len(self.chain) == 0:
             return True
-        for i in range(0, len(self.chain)-1):
-            if self.chain[i+1].previous_hash != self.chain[i].hash or not self.chain[i].is_valid(difficulty):
+        for i in range(0, len(self.chain) - 1):
+            if self.chain[i + 1].previous_hash != self.chain[i].hash or not self.chain[i].is_valid(difficulty):
                 return False
         if self.chain[-1].is_valid(difficulty):
             return True
+        return False
 
     def _add_block(self):
 
@@ -68,6 +66,3 @@ class BlockChain(BaseModel):
 
         if datetime.now() - self.last_block_added >= self.time_delta:
             self._add_block()
-
-
-

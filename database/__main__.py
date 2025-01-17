@@ -4,6 +4,7 @@
 #
 # from database.models import BlockChain, Doctor, Patient
 from database.interface import Application
+
 app = Application()
 app.main_loop_testing()
 

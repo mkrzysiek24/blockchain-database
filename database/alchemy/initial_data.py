@@ -35,7 +35,6 @@ for name, email, license_number, plain_password in test_data:
     )
     session.add(doctor)
 
-# Commit the records
 session.commit()
 
 

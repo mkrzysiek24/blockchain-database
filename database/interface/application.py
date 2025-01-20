@@ -1,9 +1,15 @@
 import json
 from logging import getLogger
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 
+from database.alchemy import DoctorData, hash_password, verify_password
 from database.models import *
 
 logger = getLogger(__name__)
+
+engine = create_engine("sqlite:///../doctors.db")
+Session = sessionmaker(bind=engine)
 
 
 class Application:
@@ -12,30 +18,60 @@ class Application:
         self.network = Network()
         self.facility_id = "abc"
         self.doctor = None
-        # todo: choosing facility and validation
-        print(f"Welcome in {self.facility_id} blockchain system!")
+        self.session = Session()
         self.network.create_facility_chain(self.facility_id)
 
-    # todo: validation from network; also, add option to log in
     def _sign_up(self):
-        doctor_id = int(input("Your doctor id: "))
         doctor_name = input("Your name: ")
         doctor_email = input("Your email: ")
-        self.doctor = Doctor(
-            id=doctor_id,
-            name=doctor_name,
-            email=doctor_email
-        )
-        logger.info("logged as default doctor")
+        license_number = input("Your license number: ")
+        password = input("Your password: ")
 
-    # for testing purpose only
-    def _log_as_default(self):
-        self.doctor = Doctor(
-            id=1234,
-            name="doctor_name",
-            email="doctor@gmail.com"
+        hashed_password, salt = hash_password(password)
+
+        doctor = DoctorData(
+            name=doctor_name,
+            email=doctor_email,
+            license_number=license_number,
+            hashed_password=hashed_password,
+            salt=salt
         )
-        logger.info("logged as default doctor")
+
+        self.session.add(doctor)
+        self.session.commit()
+        logger.info("Doctor registered successfully!")
+        return True
+
+    def _login(self):
+        email = input("Your email: ")
+        password = input("Your password: ")
+        record = self.session.query(DoctorData).filter(DoctorData.email == email).first()
+
+        if not record:
+            print("Doctor not found!")
+            return False
+
+        if verify_password(password, record.hashed_password, record.salt):
+            self.doctor = Doctor(
+                id=record.id,
+                name=record.name,
+                email=record.email
+            )
+            print(f"Welcome back, Dr. {record.name}")
+            return True
+        else:
+            print("Incorrect password!")
+            return False
+
+    def _log_as_default(self):
+        record = self.session.query(DoctorData).filter(DoctorData.id == 1).first()
+        self.doctor = Doctor(
+            id=record.id,
+            name=record.name,
+            email=record.email
+        )
+        logger.info(f"Logged in as {self.doctor.name}")
+        return True
 
     def _emit_transaction(self):
         if self.doctor:
@@ -67,13 +103,11 @@ class Application:
         else:
             logger.error("Can't emit transaction while not logged in")
 
-    # for testing purpose only
     def _show_blockchain(self):
         for block in self.network.facilities[self.facility_id].chain:
             print(f"Block {block.id}, with {len(block.transactions)} transactions; added at {block.timestamp.time()}")
 
-    def main_loop_testing(self):
-        self._log_as_default()
+    def main_loop(self):
         inp = "0"
         while inp != "3":
             inp = input("Choose 1. to emit new transaction, 2. to show current blockchain or 3. to leave\n")
@@ -81,3 +115,14 @@ class Application:
                 self._emit_transaction()
             elif inp == "2":
                 self._show_blockchain()
+
+    def run(self):
+        print(f"Welcome in Facility {self.facility_id} blockchain system!")
+        authorized = False
+        while not authorized:
+            inp = input("Choose 1 to log in and 2 to sign up: ")
+            if inp == "1":
+                authorized = self._login()
+            elif inp == "2":
+                authorized = self._sign_up()
+        self.main_loop()

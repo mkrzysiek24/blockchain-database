@@ -51,7 +51,6 @@ class BlockChain(BaseModel):
             new_block = Block.create_block(self.emitted_transactions, last_block.hash)
 
         for transaction in self.emitted_transactions:
-            # TODO: Error handling
             public_key = next(
                 (doctor.public_key for doctor in self.doctors if doctor.id == transaction.doctor_id),
                 None,

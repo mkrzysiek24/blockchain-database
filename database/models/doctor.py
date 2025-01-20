@@ -3,8 +3,9 @@ from datetime import datetime
 from typing import Any, Optional, cast
 
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.serialization import pkcs7
+from cryptography.x509 import Certificate, load_pem_x509_certificate
 from pydantic import Json
 
 from .transaction import Transaction
@@ -14,7 +15,10 @@ from .user import User
 class Doctor(User):
     license_number: Optional[str] = None
 
-    def create_transaction(self, patient_id: int, data: Json[Any]) -> Transaction:
+    def load_public_key(self, pem_data: str) -> Certificate:
+        return load_pem_x509_certificate(pem_data.encode())
+
+    def create_transaction(self, patient_id: int, data: Json[Any], patient_public_key_pem: str) -> Transaction:
         transaction = Transaction(
             doctor_id=self.id,
             patient_id=patient_id,
@@ -22,7 +26,15 @@ class Doctor(User):
             date=datetime.now(),
         )
 
-        # Serialize the transaction data
+        # public keys of the doctor and the patient
+        doctor_public_key = self.load_public_key(self.public_key)
+        patient_public_key = self.load_public_key(patient_public_key_pem)
+
+        # Encrypt using both pyblic keys
+        encrypted_data = transaction.encrypt_for_recipients([doctor_public_key, patient_public_key])
+        transaction.data = encrypted_data
+
+
         transaction_data = transaction.serialize().encode()
 
         # Deserialize private key (PEM format)
@@ -45,7 +57,6 @@ class Doctor(User):
             hashes.SHA256(),
         )
 
-        # Encode signature in base64
         transaction.signature = base64.b64encode(transaction_signature).decode()
 
         return transaction

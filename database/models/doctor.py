@@ -16,6 +16,12 @@ class Doctor(User):
     
     def create_transaction(self, patient_id: int, data: Json[Any], patient_public_key_pem: str) -> Transaction:
         """Creates and signs an encrypted transaction"""
+        try:
+            decoded_data = json.loads(data) if isinstance(data, str) else data
+            if not decoded_data:
+                raise ValueError("Transaction data cannot be empty")
+        except json.JSONDecodeError:
+            raise ValueError("Invalid JSON data")
         # Create initial transaction
         transaction = Transaction(
             doctor_id=self.id,

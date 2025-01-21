@@ -1,80 +1,98 @@
-# import json
+import pytest
+from datetime import datetime
+from unittest.mock import Mock
+from database.models import Network, BlockChain, Transaction, Doctor, Patient
+import os
+import base64
+import json
+# pip install pytest-mock
+@pytest.fixture
+def network():
 
-# import pytest
+    return Network(num_facilities=2)  #
+@pytest.fixture
+def doctor():
+    return Doctor(
+        id=1,
+        name="Dr. Smith",
+        license_number="MED123"
+    )
+@pytest.fixture
+def patient():
+    return Patient(
+        id=1,
+        name="John Doe",
+        insurance_number="INS456"
+    )
+def test_add_block_to_facility(network, mocker):
+   
+    
+    facility_id = "facility_1"
+    network.create_facility_chain(facility_id)
+    
 
-# from database.models import BlockChain, Doctor, Network
+    spy = mocker.spy(network.facilities[facility_id], "_add_block")
+    
+    network.add_block_to_facility(facility_id)
+    
+    # Verify the method was called exactly once
+    assert spy.call_count == 1
 
+@pytest.fixture
+def example_transaction(doctor, patient):
+    
+    aes_key = os.urandom(32)
+    iv = os.urandom(16)
+    encrypted_data = b"some encrypted data"  # In real case this would be actually encrypted
 
-# @pytest.fixture
-# def network():
-#     return Network(num_facilities=1)
+    mock_encrypted_data = {
+        'encrypted_data': base64.b64encode(encrypted_data).decode(),
+        'iv': base64.b64encode(iv).decode(),
+        'doctor_key': base64.b64encode(encrypted_data).decode(),  # Simplified for test
+        'patient_key': base64.b64encode(encrypted_data).decode()  # Simplified for test
+    }
+    json_data = json.dumps(mock_encrypted_data)
 
-
-# def test_create_facility_chain():
-#     network = Network(num_facilities=1)
-#     facility_id = "facility_1"
-
-#     network.create_facility_chain(facility_id)
-
-#     assert facility_id in network.facilities
-#     assert isinstance(network.facilities[facility_id], BlockChain)
-
-
-# def test_create_facility_chain_duplicate(network):
-#     facility_id = "facility_1"
-#     network.create_facility_chain(facility_id)
-#     with pytest.raises(ValueError, match=f"Blockchain for facility {facility_id} already exists"):
-#         network.create_facility_chain(facility_id)
-
-
-# @pytest.fixture
-# def doctor():
-#     return Doctor(id=1, name="Dr. Wilson", email="wilson@hospital.com")
-
-
-# @pytest.fixture
-# def transaction(doctor):
-#     data = json.dumps({"experiment_1": "34.5", "experiment_2": "67.8", "experiment_3": "123.0"})
-#     transaction = doctor.create_transaction(patient_id=42, data=data)
-#     return transaction
-
-
-# def test_emit_transaction_nonexistent_facility(network, transaction):
-#     with pytest.raises(ValueError, match="Facility .* not found"):
-#         network.emit_transaction("nonexistent_facility", transaction)
-
-
-# # def test_add_block_to_facility(network, mocker):
-# #     facility_id = "facility_1"
-# #     mock_add_block = mocker.patch.object(BlockChain, "_add_block")
-# #     network.create_facility_chain(facility_id)
-# #     network.add_block_to_facility(facility_id)
-# #     mock_add_block.assert_called_once()
-
-
-# @pytest.fixture
-# def mock_blockchain(mocker):
-#     mock = mocker.patch("database.models.blockChain.BlockChain")
-#     mock.return_value.is_valid.return_value = True
-#     return mock
-
-
-# def test_add_block_to_nonexistent_facility(network):
-#     with pytest.raises(ValueError, match="Facility .* not found"):
-#         network.add_block_to_facility("nonexistent_facility")
+    return Transaction(
+        doctor_id=1,
+        patient_id=1,
+        data=json_data,  
+        date=datetime.now(),
+    )
 
 
-# def test_validate_all_chains(network):
-#     facility_id_1 = "facility_1"
-#     facility_id_2 = "facility_2"
-#     network.create_facility_chain(facility_id_1)
-#     network.create_facility_chain(facility_id_2)
-#     assert network.validate_all_chains(2)
 
+def test_emit_transaction_to_facility(network, example_transaction):
+    """
+    Tests that transactions are properly routed to the correct facility chain.
+    This verifies the network's transaction routing capabilities.
+    """
+    facility_id = "facility_1"
+    network.create_facility_chain(facility_id)
+    
+    # Emit a transaction to the facility
+    network.emit_transaction(facility_id, example_transaction)
+    
+    # Verify the transaction was added to the facility's pending transactions
+    facility_chain = network.facilities[facility_id]
+    assert example_transaction in facility_chain.emitted_transactions
 
-# # def test_validate_all_chains_invalid(network, mocker):
-# #     facility_id = "facility_1"
-# #     mock_invalid_blockchain = mocker.patch("database.models.blockChain.BlockChain")
-# #     mock_invalid_blockchain.is_valid.return_value = False
-# #     network.facilities[facility_id] = mock_invalid_blockchain
-# #     assert not network.validate_all_chains(2)
+def test_multiple_facility_chains(network):
+    """
+    Tests that the network can properly manage multiple facility chains
+    simultaneously. This is essential for distributed operation.
+    """
+    # Create multiple facility chains
+    facility_ids = ["facility_1", "facility_2", "facility_3"]
+    
+    for facility_id in facility_ids:
+        network.create_facility_chain(facility_id)
+    
+    # Verify each facility has its own chain
+    for facility_id in facility_ids:
+        assert facility_id in network.facilities
+        assert isinstance(network.facilities[facility_id], BlockChain)
+        assert network.facilities[facility_id] is not None
+        
+    # Verify chains are independent
+    assert len(set(id(chain) for chain in network.facilities.values())) == len(facility_ids)

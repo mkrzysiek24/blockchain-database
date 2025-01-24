@@ -1,12 +1,16 @@
 import base64
 from datetime import datetime
+from logging import getLogger
 from typing import Any, Dict, Optional, cast
 from uuid import uuid4
 
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from pydantic import BaseModel, ConfigDict, Field, Json, field_validator
+
+logger = getLogger(__name__)
 
 
 class Transaction(BaseModel):
@@ -97,7 +101,8 @@ class Transaction(BaseModel):
                 hashes.SHA256(),
             )
             return True
-        except Exception as e:
+        except (ValueError, InvalidSignature, UnsupportedAlgorithm, TypeError) as e:
+            logger.error(f"Error during signature verification: {e}")
             return False
 
     def is_encrypted(self) -> bool:

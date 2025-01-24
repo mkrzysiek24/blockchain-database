@@ -1,15 +1,11 @@
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from database.alchemy.models import Base, DoctorData, PatientData
+from database.alchemy.engine import Session
+from database.alchemy.models import DoctorData, PatientData
 from database.alchemy.passwords import hash_password
 
 # Create engine and tables
-engine = create_engine("sqlite:///doctors.db")
-Base.metadata.create_all(bind=engine)
-Session = sessionmaker(bind=engine)
 session = Session()
 
 # Doctor test data

@@ -3,42 +3,12 @@ from logging import getLogger
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from database.alchemy import DoctorData, PatientData, hash_password, verify_password
+from database.alchemy.engine import Session
 from database.models import Doctor, Network, Patient
 
 logger = getLogger(__name__)
-
-engine = create_engine("sqlite:///doctors.db")
-Session = sessionmaker(bind=engine)
-
-
-def generate_key_pair():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-    )
-    public_key = private_key.public_key()
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-    return public_pem.decode()
-
-
-def generate_private_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-    )
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-    return private_pem.decode()
 
 
 class Application:

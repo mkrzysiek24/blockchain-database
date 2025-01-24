@@ -20,7 +20,7 @@ class Transaction(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("data")
-    def validate_data(cls, value: dict | None):
+    def validate_data(cls, value: Optional[dict]):
         if not value:
             raise ValueError("Data cannot be empty")
 
@@ -33,7 +33,7 @@ class Transaction(BaseModel):
         return value
 
     @field_validator("date")
-    def validate_date(cls, value: datetime | None):
+    def validate_date(cls, value: datetime):
         if not value:
             raise ValueError("Date is empty")
         if value > datetime.now():
@@ -41,13 +41,13 @@ class Transaction(BaseModel):
         return value
 
     @field_validator("doctor_id")
-    def validate_doctor_id(cls, value: int | None):
+    def validate_doctor_id(cls, value: int):
         if not value or value < 0:
             raise ValueError("Doctor id not provided")
         return value
 
     @field_validator("patient_id")
-    def validate_patient_id(cls, value: int | None):
+    def validate_patient_id(cls, value: int):
         if not value or value < 0:
             raise ValueError("Patient id not provided")
         return value

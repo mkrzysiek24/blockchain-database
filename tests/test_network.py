@@ -6,13 +6,12 @@ from datetime import datetime
 import pytest
 
 from database.models import BlockChain, Doctor, Network, Patient, Transaction
+import pytest
 
 
 @pytest.fixture
 def network():
-
-    return Network(num_facilities=2)  #
-
+    return Network(num_facilities=2) 
 
 @pytest.fixture
 def doctor():
@@ -21,7 +20,6 @@ def doctor():
         name="Dr. Smith",
         license_number="MED123",
     )
-
 
 @pytest.fixture
 def patient():
@@ -43,6 +41,7 @@ def test_add_block_to_facility(network, mocker):
 
     # Verify the method was called exactly once
     assert spy.call_count == 1
+
 
 
 @pytest.fixture

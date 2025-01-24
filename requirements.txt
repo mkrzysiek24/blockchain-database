@@ -1,6 +1,8 @@
 # Testing
 pytest~=7.4.3
 
+pytest-mock~=3.14.0
+
 #PyDantic
 
 pydantic~=2.9.2

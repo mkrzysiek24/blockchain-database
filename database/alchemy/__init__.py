@@ -1,4 +1,4 @@
-from .doctorData import DoctorData
+from .models import DoctorData, PatientData
 from .passwords import hash_password, verify_password
 
-__all__ = ["DoctorData", "hash_password", "verify_password"]
+__all__ = ["DoctorData", "PatientData" "hash_password", "verify_password"]

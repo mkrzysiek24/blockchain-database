@@ -9,7 +9,7 @@ from .transaction import Transaction
 class Network(BaseModel):
     num_facilities: int = Field(default=1)
     facilities: Dict[str, BlockChain] = Field(default_factory=dict)
-    doctors: Set[str] = Field(default_factory=set)
+    doctors: Set[int] = Field(default_factory=set)
 
     def __init__(self, num_facilities=1):
         super().__init__()
@@ -32,5 +32,5 @@ class Network(BaseModel):
             raise ValueError(f"Facility {facility_id} not found")
         self.facilities[facility_id]._add_block()
 
-    def validate_all_chains(self) -> bool:
-        return all(facility.is_valid() for facility in self.facilities.values())
+    def validate_all_chains(self, difficulty: int) -> bool:
+        return all(facility.is_valid(difficulty) for facility in self.facilities.values())

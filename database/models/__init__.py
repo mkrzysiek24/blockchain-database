@@ -4,5 +4,6 @@ from .doctor import Doctor
 from .network import Network
 from .patient import Patient
 from .transaction import Transaction
+from .user import User
 
-__all__ = ["Doctor", "Patient", "Doctor", "BlockChain", "Block", "Transaction", "Network"]
+__all__ = ["User", "Doctor", "Patient", "Doctor", "BlockChain", "Block", "Transaction", "Network"]

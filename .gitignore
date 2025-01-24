@@ -14,3 +14,4 @@
 *.sqlite*
 *.csv
 *.zip
+*.db

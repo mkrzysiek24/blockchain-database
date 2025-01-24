@@ -1,41 +1,46 @@
 import json
 from logging import getLogger
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from database.alchemy import DoctorData,PatientData, hash_password, verify_password
-from database.models import *
+from database.alchemy import DoctorData, PatientData, hash_password, verify_password
+from database.models import Doctor, Network, Patient
 
 logger = getLogger(__name__)
 
 engine = create_engine("sqlite:///doctors.db")
 Session = sessionmaker(bind=engine)
 
+
 def generate_key_pair():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048
+        key_size=2048,
     )
     public_key = private_key.public_key()
     public_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
     return public_pem.decode()
+
 
 def generate_private_key():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048
+        key_size=2048,
     )
     private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
     return private_pem.decode()
+
+
 class Application:
 
     def __init__(self):
@@ -58,7 +63,7 @@ class Application:
             email=doctor_email,
             license_number=license_number,
             hashed_password=hashed_password,
-            salt=salt
+            salt=salt,
         )
 
         self.session.add(doctor)
@@ -79,7 +84,7 @@ class Application:
             self.doctor = Doctor(
                 id=record.id,
                 name=record.name,
-                email=record.email
+                email=record.email,
             )
             print(f"Welcome back, Dr. {record.name}")
             return True
@@ -92,7 +97,7 @@ class Application:
         self.doctor = Doctor(
             id=record.id,
             name=record.name,
-            email=record.email
+            email=record.email,
         )
         logger.info(f"Logged in as {self.doctor.name}")
         return True
@@ -100,7 +105,7 @@ class Application:
     def _emit_transaction(self):
         if self.doctor:
             patient_id = int(input("Patient id: "))
-        
+
             patient = self.session.query(PatientData).filter(PatientData.id == patient_id).first()
             if not patient:
                 logger.error("Patient not found")
@@ -118,7 +123,7 @@ class Application:
             transaction = self.doctor.create_transaction(
                 patient_id=patient_id,
                 data=json.dumps(data),
-                patient_public_key_pem=patient.public_key  
+                patient_public_key_pem=patient.public_key,
             )
 
             self.network.emit_transaction(self.facility_id, transaction)
@@ -128,31 +133,33 @@ class Application:
         if not self.patient:
             logger.error("No patient logged in")
             return
-            
+
         patient_transactions = []
         for block in self.network.facilities[self.facility_id].chain:
             for transaction in block.transactions:
                 if transaction.patient_id == self.patient.id:
                     decrypted_data = self.patient.decrypt_transaction(transaction)
-                    patient_transactions.append({
-                        "doctor_id": transaction.doctor_id,
-                        "date": transaction.date,
-                        "data": decrypted_data
-                    })
-        
+                    patient_transactions.append(
+                        {
+                            "doctor_id": transaction.doctor_id,
+                            "date": transaction.date,
+                            "data": decrypted_data,
+                        },
+                    )
+
         if not patient_transactions:
             print("No transactions found")
             return
-            
+
         for tx in patient_transactions:
             doctor = self.session.query(DoctorData).filter(DoctorData.id == tx["doctor_id"]).first()
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print(f"Date: {tx['date'].strftime('%Y-%m-%d %H:%M:%S')}")
             print(f"Doctor: Dr. {doctor.name if doctor else 'Unknown'}")
             print("\nMedical Data:")
-            for key, value in tx['data'].items():
+            for key, value in tx["data"].items():
                 print(f"  {key.title()}: {value}")
-            print("="*50)
+            print("=" * 50)
 
     def _show_blockchain(self):
         for block in self.network.facilities[self.facility_id].chain:
@@ -189,23 +196,23 @@ class Application:
         password = input("Your password: ")
 
         hashed_password, salt = hash_password(password)
-        
+
         # Generate key pair
         private_key = rsa.generate_private_key(
             public_exponent=65537,
-            key_size=2048
+            key_size=2048,
         )
-        
+
         private_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         )
-        
+
         public_key = private_key.public_key()
         public_pem = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
 
         patient = PatientData(
@@ -215,7 +222,7 @@ class Application:
             hashed_password=hashed_password,
             salt=salt,
             public_key=public_pem.decode(),
-            private_key=private_pem.decode()
+            private_key=private_pem.decode(),
         )
 
         self.session.add(patient)
@@ -238,8 +245,8 @@ class Application:
                 id=record.id,
                 name=record.name,
                 email=record.email,
-                private_key=record.private_key,  
-                public_key=record.public_key
+                private_key=record.private_key,
+                public_key=record.public_key,
             )
             print(f"Welcome, {record.name}")
             return True
@@ -255,7 +262,7 @@ class Application:
         while not authorized:
             user = input("Doctor - choose 1, Patient - choose 2: ")
             inp = input("Choose 1 to log in and 2 to sign up: ")
-            
+
             if user == "1":  # Doctor
                 if inp == "1":
                     authorized = self._login_doctor()
@@ -267,7 +274,7 @@ class Application:
                     authorized = self._login_patient()
                 elif inp == "2":
                     authorized = self._sign_up_patient()
-                    
+
         if is_patient:
             self.main_loop_patient()
         else:

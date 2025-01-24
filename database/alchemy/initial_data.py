@@ -1,28 +1,16 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from database.alchemy.models import DoctorData,PatientData, Base
-# from database.alchemy.patientData import PatientData
-from database.alchemy.passwords import hash_password
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from database.alchemy.models import Base, DoctorData, PatientData
+from database.alchemy.passwords import hash_password
 
 # Create engine and tables
 engine = create_engine("sqlite:///doctors.db")
 Base.metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine)
 session = Session()
-
-# def generate_key_pair():
-#     private_key = rsa.generate_private_key(
-#         public_exponent=65537,
-#         key_size=2048
-#     )
-#     public_key = private_key.public_key()
-#     public_pem = public_key.public_bytes(
-#         encoding=serialization.Encoding.PEM,
-#         format=serialization.PublicFormat.SubjectPublicKeyInfo
-#     )
-#     return public_pem.decode()
 
 # Doctor test data
 test_data_doctors = [
@@ -50,26 +38,28 @@ for name, email, license_number, plain_password in test_data_doctors:
     )
     session.add(doctor)
 
+
 # Patient test data
 def generate_key_pair():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048
+        key_size=2048,
     )
-    
+
     private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
-    
+
     public_key = private_key.public_key()
     public_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
-    
+
     return private_pem.decode(), public_pem.decode()
+
 
 # Patient test data
 test_data_patients = [
@@ -88,7 +78,7 @@ for name, email, insurance_number, plain_password in test_data_patients:
         hashed_password=hashed_password,
         salt=salt,
         public_key=public_key,
-        private_key=private_key
+        private_key=private_key,
     )
     session.add(patient)
 

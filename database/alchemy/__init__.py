@@ -1,4 +1,3 @@
-
 from .models import DoctorData, PatientData
 from .passwords import hash_password, verify_password
 

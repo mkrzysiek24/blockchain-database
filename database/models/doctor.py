@@ -1,19 +1,22 @@
-
 import base64
+import json
+import os
 from datetime import datetime
 from typing import Any, Optional, cast
+
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import os
 from pydantic import Json
+
 from .transaction import Transaction
 from .user import User
-import json
+
+
 class Doctor(User):
     license_number: Optional[str] = None
-    
+
     def create_transaction(self, patient_id: int, data: Json[Any], patient_public_key_pem: str) -> Transaction:
         """Creates and signs an encrypted transaction"""
         try:
@@ -37,40 +40,44 @@ class Doctor(User):
         # Encrypt the data using AES
         cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv))
         encryptor = cipher.encryptor()
-        
+
         # Convert data to bytes and pad
-        data_bytes = str(data).encode('utf-8')
+        data_bytes = str(data).encode("utf-8")
         padded_data = self._pad_data(data_bytes)
         encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
 
         # Encrypt AES key for both doctor and patient
         patient_public_key = serialization.load_pem_public_key(
-            patient_public_key_pem.encode()
+            patient_public_key_pem.encode(),
         )
         doctor_public_key = serialization.load_pem_public_key(
-            self.public_key.encode()
+            self.public_key.encode(),
         )
 
         # Store encrypted keys and IV in the data field
         transaction.data = {
-            'encrypted_data': base64.b64encode(encrypted_data).decode(),
-            'iv': base64.b64encode(iv).decode(),
-            'doctor_key': base64.b64encode(doctor_public_key.encrypt(
-                aes_key,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )).decode(),
-            'patient_key': base64.b64encode(patient_public_key.encrypt(
-                aes_key,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )).decode()
+            "encrypted_data": base64.b64encode(encrypted_data).decode(),
+            "iv": base64.b64encode(iv).decode(),
+            "doctor_key": base64.b64encode(
+                doctor_public_key.encrypt(
+                    aes_key,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,
+                    ),
+                ),
+            ).decode(),
+            "patient_key": base64.b64encode(
+                patient_public_key.encrypt(
+                    aes_key,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,
+                    ),
+                ),
+            ).decode(),
         }
 
         # Sign the transaction
@@ -95,7 +102,8 @@ class Doctor(User):
 
     def decrypt_transaction(self, transaction: Transaction) -> Any:
         """Decrypts transaction data using doctor's key"""
-        return self.decrypt_transaction_data(transaction, 'doctor_key')
+        return self.decrypt_transaction_data(transaction, "doctor_key")
+
     @staticmethod
     def _pad_data(data: bytes) -> bytes:
         block_size = 16

@@ -1,13 +1,13 @@
-from typing import Optional, Any, cast
 import base64
-from datetime import datetime
+from typing import Any, Optional
+
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from pydantic import BaseModel, Field, model_validator, Json
+from pydantic import BaseModel, Field, model_validator
+
 from .transaction import Transaction
+
 
 class User(BaseModel):
     id: int
@@ -63,29 +63,29 @@ class User(BaseModel):
             raise ValueError("Could not get encryption package")
 
         # Decode all base64 encoded data
-        encrypted_data = base64.b64decode(encrypted_package['encrypted_data'])
-        iv = base64.b64decode(encrypted_package['iv'])
+        encrypted_data = base64.b64decode(encrypted_package["encrypted_data"])
+        iv = base64.b64decode(encrypted_package["iv"])
         encrypted_key = base64.b64decode(encrypted_package[key_type])
 
         # Decrypt the AES key using private key
         private_key = serialization.load_pem_private_key(
             self.private_key.encode(),
-            password=None
+            password=None,
         )
         aes_key = private_key.decrypt(
             encrypted_key,
             padding.OAEP(
                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
-                label=None
-            )
+                label=None,
+            ),
         )
 
         # Decrypt the data using the AES key
         cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         padded_data = decryptor.update(encrypted_data) + decryptor.finalize()
-        
+
         # Remove padding and convert back to original format
         unpadded_data = self._unpad_data(padded_data)
         return eval(unpadded_data.decode())

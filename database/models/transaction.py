@@ -1,11 +1,13 @@
+import base64
 from datetime import datetime
-from typing import Any, Optional, cast, Dict, Union
+from typing import Any, Dict, Optional, cast
 from uuid import uuid4
+
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from pydantic import BaseModel, ConfigDict, Field, Json, field_validator
-import base64
+
 
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -14,20 +16,20 @@ class Transaction(BaseModel):
     data: Json[Any]  # This can hold both regular and encrypted data
     date: datetime
     signature: Optional[str] = None
-    
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("data")
     def validate_data(cls, value: dict | None):
         if not value:
             raise ValueError("Data cannot be empty")
-        
+
         # If this is encrypted data, validate encryption fields
-        if isinstance(value, dict) and 'encrypted_data' in value:
-            required_fields = {'encrypted_data', 'iv', 'doctor_key', 'patient_key'}
+        if isinstance(value, dict) and "encrypted_data" in value:
+            required_fields = {"encrypted_data", "iv", "doctor_key", "patient_key"}
             if not all(field in value for field in required_fields):
                 raise ValueError(f"Encrypted data must contain all required fields: {required_fields}")
-        
+
         return value
 
     @field_validator("date")
@@ -56,11 +58,7 @@ class Transaction(BaseModel):
 
         """
         transaction_data = (
-            f"{self.id}|"
-            f"{self.doctor_id}|"
-            f"{self.patient_id}|"
-            f"{self.date.isoformat()}|"
-            f"{self.data}"
+            f"{self.id}|" f"{self.doctor_id}|" f"{self.patient_id}|" f"{self.date.isoformat()}|" f"{self.data}"
         )
         return transaction_data
 
@@ -79,11 +77,7 @@ class Transaction(BaseModel):
 
             # Serialize the transaction data for verification
             transaction_data = (
-                f"{self.id}|"
-                f"{self.doctor_id}|"
-                f"{self.patient_id}|"
-                f"{self.date.isoformat()}|"
-                f"{self.data}"
+                f"{self.id}|" f"{self.doctor_id}|" f"{self.patient_id}|" f"{self.date.isoformat()}|" f"{self.data}"
             ).encode()
 
             # Load the public key from PEM format
@@ -111,11 +105,11 @@ class Transaction(BaseModel):
         Checks if the transaction data is encrypted
         """
         return (
-            isinstance(self.data, dict) and
-            'encrypted_data' in self.data and
-            'iv' in self.data and
-            'doctor_key' in self.data and
-            'patient_key' in self.data
+            isinstance(self.data, dict)
+            and "encrypted_data" in self.data
+            and "iv" in self.data
+            and "doctor_key" in self.data
+            and "patient_key" in self.data
         )
 
     def get_encryption_package(self) -> Optional[Dict[str, str]]:
@@ -124,9 +118,9 @@ class Transaction(BaseModel):
         """
         if self.is_encrypted():
             return {
-                'encrypted_data': self.data['encrypted_data'],
-                'iv': self.data['iv'],
-                'doctor_key': self.data['doctor_key'],
-                'patient_key': self.data['patient_key']
+                "encrypted_data": self.data["encrypted_data"],
+                "iv": self.data["iv"],
+                "doctor_key": self.data["doctor_key"],
+                "patient_key": self.data["patient_key"],
             }
         return None
